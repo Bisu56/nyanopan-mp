@@ -218,9 +218,9 @@ export function CartPage() {
           <p aria-live="polite" className="mt-3 text-xs leading-relaxed text-on-surface-variant">
             {hasIssues ? "Resolve availability issues to continue." : "Prices and stock will be checked again before checkout."}
           </p>
-          <button type="button" disabled className={`${buttonClassName({ variant: "primary", size: "lg" })} mt-5 w-full opacity-60`}>
-            Checkout coming soon
-          </button>
+          <Link aria-disabled={hasIssues} href={hasIssues ? "/cart" : "/checkout"} className={`${buttonClassName({ variant: "primary", size: "lg" })} mt-5 w-full ${hasIssues ? "pointer-events-none opacity-50" : ""}`}>
+            Continue to checkout
+          </Link>
           <Link href="/products" className={`${buttonClassName({ variant: "secondary", size: "md" })} mt-3 w-full`}>
             Continue shopping
           </Link>
@@ -233,9 +233,9 @@ export function CartPage() {
             <p className="text-xs text-on-surface-variant">Subtotal</p>
             <p className="text-lg font-bold text-on-surface">{formatNpr(subtotal)}</p>
           </div>
-          <button type="button" disabled className={`${buttonClassName({ variant: "primary", size: "md" })} min-w-44 opacity-60`}>
-            Checkout coming soon
-          </button>
+          <Link aria-disabled={hasIssues} href={hasIssues ? "/cart" : "/checkout"} className={`${buttonClassName({ variant: "primary", size: "md" })} min-w-44 ${hasIssues ? "pointer-events-none opacity-50" : ""}`}>
+            Checkout
+          </Link>
         </div>
         <p className="mx-auto mt-2 max-w-7xl text-center text-[11px] text-on-surface-variant" aria-live="polite">
           {hasIssues ? "Resolve availability issues to continue." : "Prices and stock will be checked again before checkout."}

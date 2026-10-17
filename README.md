@@ -14,7 +14,7 @@ Storage). All prices are in Nepali Rupees (NPR).
 | Styling | Tailwind CSS v4 with a custom token palette (see `app/globals.css`) |
 | Database | Supabase PostgreSQL with Row Level Security, local-first via Supabase CLI |
 | Auth / Storage | Supabase Auth + private Supabase Storage bucket (admin uploads; short-lived signed reads) |
-| Payments (release 1) | Cash on Delivery only; eSewa API integration deferred (Milestone 9) |
+| Payments (release 1) | Cash on Delivery and owner-provided manual payment instructions; online gateway deferred |
 
 ## Getting started
 
@@ -64,8 +64,16 @@ The shopping bag is saved in versioned browser storage with product IDs, optiona
 variant IDs and quantities only. Product names, prices and stock are fetched from
 the server. `/api/cart/validate` recalculates the current subtotal and checks
 product/variant availability whenever the bag is viewed; checkout must call the
-same server validation again. This endpoint only quotes and validates the bag and
-does not create an order.
+same server validation again. Order placement rechecks database prices and stock
+inside one transaction while locking inventory, then stores price snapshots.
+Delivery is recorded as zero until the owner confirms a rate. The API is
+idempotent and returns a private confirmation path; guest receipts do not expose
+contact or address details. Manual payments remain `unpaid` until reviewed.
+
+Set `MANUAL_PAYMENT_INSTRUCTIONS` in the server environment to show verified
+directions. Leave it blank until those directions are confirmed; the receipt
+will advise customers not to send funds yet. Never use a `NEXT_PUBLIC_` variable
+for payment credentials or other secrets.
 
 The app uses `NEXT_PUBLIC_SUPABASE_URL` and
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The publishable key is intended for
@@ -81,7 +89,7 @@ put a service-role key or other secret in a `NEXT_PUBLIC_` variable.
 | `npm run dev` | Development server |
 | `npm run build` | Production build (fails on type errors) |
 | `npm run lint` | ESLint (Next.js core-web-vitals + TypeScript rules) |
-| `npm test` | Cart model unit tests (Node test runner) |
+| `npm test` | Cart and checkout validation unit tests (Node test runner) |
 | `npx tsc --noEmit` | Standalone type-check |
 
 ## Project structure
@@ -100,12 +108,14 @@ supabase/             Local Supabase config, database migrations and seed data
 
 ## Engineering rules this repo follows
 
-- All user input is validated on the **server** (Zod).
+- All checkout input is validated on the **server** before reaching the database.
 - Prices, stock and order totals are **never trusted** from the browser; they are
   re-read from the database and recomputed server-side in integer paisa.
 - Administrative catalog writes are authorized on the server and independently
   restricted by RLS; the service-role key is not used for catalog operations.
 - Row Level Security is enabled on every table; public read, admin write.
+- Guest order creation uses a restricted server-side database function; anonymous
+  direct reads are revoked and confirmation lookup returns no personal data.
 - Secrets and `.env.local` are never committed (`.env.example` is the template).
 - No real product data, reviews or business claims are invented; placeholder
   content is clearly labelled until the owner supplies verified material.

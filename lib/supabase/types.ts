@@ -25,7 +25,7 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
-export type PaymentMethod = "cod";
+export type PaymentMethod = "cod" | "manual";
 
 export type PaymentStatus = "unpaid" | "paid";
 
@@ -99,6 +99,9 @@ export type OrderRow = {
   payment_status: PaymentStatus;
   status: OrderStatus;
   notes: string | null;
+  idempotency_key: string;
+  confirmation_token_hash: string | null;
+  delivery_notes: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -130,13 +133,11 @@ export type OrderStatusHistoryRow = {
 
 /** Stored as JSONB in public.orders.shipping_address */
 export interface ShippingAddress {
-  line1: string;
-  line2?: string;
-  city: string;
+  full_address: string;
+  municipality: string;
   district: string;
   province: string;
-  country: string;
-  postal_code?: string;
+  ward: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -223,10 +224,11 @@ export interface Database {
       };
       orders: {
         Row: OrderRow;
-        Insert: Omit<OrderRow, "id" | "created_at" | "updated_at"> & {
+        Insert: Omit<OrderRow, "id" | "created_at" | "updated_at" | "idempotency_key"> & {
           id?: string;
           created_at?: string;
           updated_at?: string;
+          idempotency_key?: string;
         };
         Update: Partial<Omit<OrderRow, "id">>;
         Relationships: [];
@@ -282,6 +284,23 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      create_order: {
+        Args: {
+          p_idempotency_key: string;
+          p_confirmation_token_hash: string;
+          p_customer_name: string;
+          p_customer_phone: string;
+          p_shipping_address: ShippingAddress;
+          p_delivery_notes: string | null;
+          p_payment_method: PaymentMethod;
+          p_items: { productId: string; variantId: string | null; quantity: number }[];
+        };
+        Returns: { order_id: string; order_code: string; subtotal_paisa: number; delivery_paisa: number; total_paisa: number; payment_method: PaymentMethod }[];
+      };
+      get_order_confirmation: {
+        Args: { p_confirmation_token_hash: string };
+        Returns: { order_code: string; subtotal_paisa: number; delivery_paisa: number; total_paisa: number; payment_method: PaymentMethod; payment_status: PaymentStatus }[];
       };
     };
     Enums: {

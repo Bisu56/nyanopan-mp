@@ -197,3 +197,42 @@ authentication feature set remains unimplemented.
 - Product photography — drop into `public/images/products/`.
 - Confirmation of the announcement-bar delivery policy and artisan-count claims.
 - Supabase: local CLI setup is verified; hosted project later — only `.env` values change.
+## Milestone 6 — complete (2026-10-17)
+
+### Delivered
+
+- **Checkout:** customer name and phone, province, district, municipality,
+  ward, full address, optional delivery notes, COD and manual payment options.
+- **Order creation:** a new additive migration expands payment methods, adds
+  idempotency and confirmation-token fields, and defines a restricted
+  security-definer RPC. It validates the request, locks products and variants,
+  checks active/published status and stock, decrements inventory atomically,
+  and writes database-derived paisa prices and item snapshots.
+- **Privacy:** anonymous table reads for orders, order items and status history
+  are revoked. Confirmation uses a hashed, random bearer token and exposes only
+  the order code, totals and payment state. Contact/address details never appear
+  in API output or the receipt page.
+- **Payments:** COD and manual methods both begin with an unpaid status. Optional
+  manual instructions use the server-only `MANUAL_PAYMENT_INSTRUCTIONS`
+  environment variable; no payment is verified automatically.
+- **Retry safety:** a repeated attempt with the same idempotency key and token
+  returns the original order without reserving stock a second time. The browser
+  retains attempt details only in memory, not local storage.
+- **Tests/docs:** checkout field validation tests and a pgTAP database integration
+  test were added. README and `.env.example` document setup.
+
+### Verification
+
+- `npm test` — pass (cart tests and checkout validation).
+- `npm run lint` — pass.
+- `npx tsc --noEmit` — pass.
+- `git diff --check` — pass.
+- Local checkout migration applied; `npx supabase test db` — pass (20 pgTAP
+  assertions across catalog RLS and checkout integration tests).
+- `npx supabase db lint --local --schema public --level error` — pass.
+
+### Remaining configuration
+
+- Delivery is stored as zero until the owner confirms delivery pricing.
+- Supply verified manual payment instructions in a server-only environment
+  variable before advertising manual payment.
