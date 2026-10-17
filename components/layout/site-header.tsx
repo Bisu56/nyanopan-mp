@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Menu, ShoppingBag, X } from "lucide-react";
 
@@ -29,6 +30,32 @@ function isActivePath(pathname: string, href: string): boolean {
  *   query parameter in Milestone 3.
  */
 export function SiteHeader() {
+  return (
+    <Suspense fallback={<SiteHeaderFallback />}>
+      <SiteHeaderContent />
+    </Suspense>
+  );
+}
+
+function SiteHeaderFallback() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-surface-container-highest/50 bg-surface/95 shadow-[0_1px_8px_rgba(42,35,30,0.04)] backdrop-blur-md">
+      <div className="w-full bg-surface-container-high px-4 py-1.5 text-center md:px-6">
+        <p className="text-[11px] font-medium tracking-wide text-on-surface-variant md:text-xs">
+          {siteConfig.announcement}
+        </p>
+      </div>
+      <Container className="flex h-20 items-center justify-between gap-4">
+        <Link href="/" className="font-serif text-2xl font-bold tracking-tight text-primary">
+          {siteConfig.name}
+        </Link>
+        <span aria-hidden="true" className="h-8 w-8 rounded-full bg-surface-container" />
+      </Container>
+    </header>
+  );
+}
+
+function SiteHeaderContent() {
   const pathname = usePathname();
   const { itemCount, ready } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
