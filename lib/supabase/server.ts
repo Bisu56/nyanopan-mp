@@ -5,17 +5,11 @@
  * It reads and writes auth cookies from the Next.js request/response context,
  * which is what makes the session available server-side in the App Router.
  *
- * Two factories are exported:
- *
- *   createServerClient()
- *     - Uses the ANON key with RLS enforced.
- *     - Use for all normal server-side data fetching.
- *
- *   createServiceClient()
- *     - Uses the SERVICE_ROLE key — bypasses RLS entirely.
- *     - Use ONLY for privileged server operations (e.g. order creation RPC,
- *       admin writes). Never leak this client to any response or log.
+ * Uses a request-bound publishable-key client so database RLS sees the
+ * current user's session for server-side reads and writes.
  */
+
+import "server-only";
 
 import { createServerClient as _createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -30,11 +24,13 @@ export async function createServerClient() {
   const cookieStore = await cookies();
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set",
+      "Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     );
   }
 
@@ -43,35 +39,16 @@ export async function createServerClient() {
       getAll() {
         return cookieStore.getAll();
       },
-      // Server Components cannot set cookies, so we silently skip writes here.
-      // The middleware (middleware.ts) handles session refresh and cookie writes.
-      setAll() {},
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Service-role client (bypasses RLS) — use ONLY for privileged server code
-// ---------------------------------------------------------------------------
-
-export async function createServiceClient() {
-  const cookieStore = await cookies();
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceKey) {
-    throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set",
-    );
-  }
-
-  return _createServerClient<Database>(url, serviceKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
+      // Server Components cannot set cookies. Proxy handles refresh there.
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
+        } catch {
+          // Cookie writes are unavailable while rendering a Server Component.
+        }
       },
-      setAll() {},
     },
   });
 }

@@ -47,6 +47,7 @@ export type CategoryRow = {
   description: string | null;
   sort_order: number;
   created_at: string;
+  updated_at: string;
 };
 
 export type ProductRow = {
@@ -58,6 +59,8 @@ export type ProductRow = {
   price_paisa: number;
   stock_quantity: number;
   is_active: boolean;
+  is_published: boolean;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -78,6 +81,7 @@ export type ProductImageRow = {
   alt_text: string;
   sort_order: number;
   created_at: string;
+  updated_at: string;
 };
 
 export type OrderRow = {
@@ -151,19 +155,25 @@ export interface Database {
       };
       categories: {
         Row: CategoryRow;
-        Insert: Omit<CategoryRow, "id" | "created_at"> & {
+        Insert: Omit<CategoryRow, "id" | "created_at" | "updated_at"> & {
           id?: string;
           created_at?: string;
+          updated_at?: string;
         };
         Update: Partial<Omit<CategoryRow, "id">>;
         Relationships: [];
       };
       products: {
         Row: ProductRow;
-        Insert: Omit<ProductRow, "id" | "created_at" | "updated_at"> & {
+        Insert: Omit<
+          ProductRow,
+          "id" | "created_at" | "updated_at" | "published_at" | "is_published"
+        > & {
           id?: string;
           created_at?: string;
           updated_at?: string;
+          is_published?: boolean;
+          published_at?: string | null;
         };
         Update: Partial<Omit<ProductRow, "id">>;
         Relationships: [
@@ -195,9 +205,10 @@ export interface Database {
       };
       product_images: {
         Row: ProductImageRow;
-        Insert: Omit<ProductImageRow, "id" | "created_at"> & {
+        Insert: Omit<ProductImageRow, "id" | "created_at" | "updated_at"> & {
           id?: string;
           created_at?: string;
+          updated_at?: string;
         };
         Update: Partial<Omit<ProductImageRow, "id">>;
         Relationships: [

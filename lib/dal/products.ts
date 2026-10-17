@@ -12,7 +12,7 @@
  *
  * These functions use the ANON client (with RLS enforced) so they respect the
  * same visibility rules as the public storefront:
- *   - Only active products are returned.
+ *   - Only active, published products are returned publicly.
  *   - The inactive seed row ("sample-inactive-wip") is hidden.
  */
 
@@ -106,7 +106,7 @@ interface GetProductsOptions {
 }
 
 /**
- * Fetch active products, optionally filtered by category.
+ * Fetch active, published products, optionally filtered by category.
  * Returns the product plus a slim category join for display purposes.
  */
 export async function getProducts(
@@ -134,6 +134,7 @@ export async function getProducts(
     `,
     )
     .eq("is_active", true)
+    .eq("is_published", true)
     .order(sort === "newest" ? "created_at" : "price_paisa", {
       ascending: sort === "price-asc",
     })
@@ -208,6 +209,7 @@ export async function getProductBySlug(
     )
     .eq("slug", slug)
     .eq("is_active", true)
+    .eq("is_published", true)
     .maybeSingle();
 
   if (error) {
@@ -234,7 +236,7 @@ export async function getProductBySlug(
 /**
  * Fetch multiple products by their IDs.
  * Used by the cart to re-read live prices before checkout.
- * Only returns active products — items for deactivated products return nothing.
+ * Only returns active, published products — drafts and deactivated items return nothing.
  */
 export async function getProductsByIds(
   ids: string[],
@@ -247,7 +249,8 @@ export async function getProductsByIds(
     .from("products")
     .select("*")
     .in("id", ids)
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .eq("is_published", true);
 
   if (error) {
     console.error("[DAL] getProductsByIds error:", error.message);

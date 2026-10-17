@@ -1,6 +1,6 @@
 # Implementation Status
 
-Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (Milestone 3 complete)**.
+Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (Supabase catalog integration slice complete)**.
 
 ## Milestones
 
@@ -9,12 +9,41 @@ Living checklist maintained at the end of every milestone. Last updated: **2026-
 | 1 | Foundation: repo hygiene, design tokens, UI kit, site shell | ✅ Complete |
 | 2 | Local Supabase CLI, schema migrations + RLS, placeholder seed data | ✅ Complete |
 | 3 | Product browsing: home catalog, filters, product detail | ✅ Complete |
-| 4 | Cart: client cart store, cart page, quantity controls | ⬜ Not started |
+| 4 | Cart: client cart store, cart page, quantity controls; Supabase catalog integration requested for this milestone | 🟡 Partial |
 | 5 | Auth: Supabase signup/login/logout, session DAL, admin role | ⬜ Not started |
 | 6 | Checkout & orders (guest allowed), COD, atomic stock decrement | ⬜ Not started |
 | 7 | Admin interface: product CRUD, Storage uploads, order management | ⬜ Not started |
 | 8 | Polish: order lookup, SEO, accessibility, tests, docs | ⬜ Not started |
 | 9 | eSewa readiness: payment abstraction + docs (no live setup) | ⬜ Not started |
+
+## Milestone 4 — Supabase catalog integration slice (2026-10-17)
+
+### Delivered
+
+- Added an additive catalog migration with publication state, publication and
+  update timestamps, constraints, indexes and row-level security policies.
+- Restricted public catalog reads to active, published products and their
+  categories, variants and image metadata. Administrative writes require an
+  authenticated admin profile in both the server DAL guard and database policies.
+- Configured the `product-images` bucket as private, with a 5 MiB limit and image
+  MIME type allowlist. Storage object access is admin-only; public display must
+  use short-lived signed URLs after a server-side publication check.
+- Updated local demo seed rows to explicitly publish only the active sample
+  products, adopted Supabase's publishable-key environment variable, and removed
+  the unused service-role client path.
+- Updated catalog DAL filters and TypeScript row types for publication state.
+
+### Verification
+
+- `npm run lint` — pass.
+- `npx tsc --noEmit` — pass.
+- `npx supabase migration up --local` — new migration applied.
+- `npx supabase test db` — pass, 10 RLS integration assertions.
+- `npx supabase db lint --local --schema public --level error` — pass.
+- `npm run build` — blocked in both sandboxed and elevated attempts because
+  Turbopack cannot bind a local port in this environment.
+
+The cart work listed in the original milestone plan remains unimplemented.
 
 ## Milestone 1 — complete (2026-10-17)
 
