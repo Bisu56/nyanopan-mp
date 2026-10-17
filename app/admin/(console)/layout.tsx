@@ -26,6 +26,7 @@ async function AuthorizedAdmin({ children }: { children: ReactNode }) {
         <div>
           <Link href="/admin" className="font-serif text-2xl font-bold">Nyanopan admin</Link>
           <nav aria-label="Admin" className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
+            <Link className="hover:text-primary" href="/admin/orders">Orders</Link>
             <Link className="hover:text-primary" href="/admin/products">Products</Link>
             <Link className="hover:text-primary" href="/admin/categories">Categories</Link>
             <Link className="hover:text-primary" href="/">View storefront</Link>

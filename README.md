@@ -96,6 +96,21 @@ directions. Leave it blank until those directions are confirmed; the receipt
 will advise customers not to send funds yet. Never use a `NEXT_PUBLIC_` variable
 for payment credentials or other secrets.
 
+### Admin orders and sales
+
+The protected `/admin/orders` list supports order-code search and separate order
+and payment filters. Customer contact and delivery details appear only on the
+admin-only order detail page. Status moves through pending, confirmed,
+processing, shipped and delivered; an unshipped order may be cancelled. Stock
+is reserved at checkout and restored in the same database transaction when an
+order is first cancelled. Repeating the cancellation request cannot restore it
+again. Product and variant rows referenced by an order cannot be deleted, so
+stock can still be reconciled. Payment remains a separate state and an admin
+must explicitly confirm it; marking an order shipped or delivered never marks
+payment paid. Status and payment changes are stored in separate histories with
+timestamps. The admin dashboard totals are calculated from stored orders, and
+show an empty state before the first order.
+
 The app uses `NEXT_PUBLIC_SUPABASE_URL` and
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The publishable key is intended for
 browser use and does not replace RLS. Server-side admin code should call

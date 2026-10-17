@@ -1,6 +1,6 @@
 # Implementation Status
 
-Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (cart and checkout validation slice complete)**.
+Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (admin order workflow complete)**.
 
 ## Milestones
 
@@ -15,6 +15,35 @@ Living checklist maintained at the end of every milestone. Last updated: **2026-
 | 7 | Admin interface: product CRUD, Storage uploads, order management | ⬜ Not started |
 | 8 | Polish: order lookup, SEO, accessibility, tests, docs | ⬜ Not started |
 | 9 | eSewa readiness: payment abstraction + docs (no live setup) | ⬜ Not started |
+
+## Owner-requested Milestone 8 — admin order management (2026-10-17)
+
+### Delivered
+
+- Added a protected admin order list with order-code search and independent order
+  and payment filters. Customer contact and delivery details are limited to the
+  protected order detail view.
+- Added the pending → confirmed → processing → shipped → delivered workflow and
+  cancellation for unshipped orders, with per-stage timestamps and a status
+  history. Payment has a separate history and can only move to paid through an
+  explicit admin action.
+- Added admin-only database procedures and removed direct order write grants.
+  Cancellation restores the parent and variant stock in the same transaction;
+  order locking and terminal cancellation make repeated requests idempotent.
+  Referenced catalog rows are protected from deletion to preserve reconciliation.
+- Added real database sales aggregates for order count, orders needing attention,
+  unpaid orders and delivered revenue. The dashboard displays a clear empty
+  state when there are no orders.
+- Fixed catalog RLS test counts to scope assertions to their own fixtures when
+  the configured seed data is present.
+
+### Verification
+
+- `npx supabase db reset --local --yes` — pass; all migrations, including the
+  order workflow migration, applied to a clean local database.
+- `npx supabase test db --local` — pass, 58 pgTAP assertions across four files.
+- `npx supabase db lint --local --schema public --level error` — pass.
+- `npm test`, `npm run lint` and `npx tsc --noEmit` — pass.
 
 ## Milestone 4 — Supabase catalog integration slice (2026-10-17)
 

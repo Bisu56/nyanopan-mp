@@ -29,21 +29,29 @@ values (
   'catalog-admin@example.invalid', '', now(), '{"provider":"email","providers":["email"]}',
   '{}', now(), now()
 );
+insert into auth.users (
+  id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+) values (
+  'f4000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated',
+  'catalog-customer@example.invalid', '', now(), '{"provider":"email","providers":["email"]}',
+  '{}', now(), now()
+);
 update public.profiles set role = 'admin'
 where id = 'f3000000-0000-4000-8000-000000000001';
 
 set local role anon;
 select set_config('request.jwt.claims', '{"role":"anon"}', true);
-select is((select count(*)::integer from public.products), 1, 'anonymous sees only active published products');
-select is((select count(*)::integer from public.categories), 1, 'anonymous sees only categories with a visible product');
-select is((select count(*)::integer from public.product_images), 1, 'anonymous sees image metadata only for visible products');
+select is((select count(*)::integer from public.products where slug like 'test-%'), 1, 'anonymous sees only active published fixture products');
+select is((select count(*)::integer from public.categories where slug like 'test-%'), 1, 'anonymous sees only fixture categories with a visible product');
+select is((select count(*)::integer from public.product_images where storage_path like 'f2000000-%'), 1, 'anonymous sees fixture image metadata only for visible products');
 select is((select count(*)::integer from storage.objects where bucket_id = 'product-images'), 0, 'private image objects are not anonymously readable');
 select ok(not has_table_privilege('anon', 'public.products', 'insert'), 'anonymous role has no product insert grant');
 reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"f4000000-0000-4000-8000-000000000001","role":"authenticated"}', true);
-select is((select count(*)::integer from public.products), 1, 'authenticated non-admin sees only active published products');
+select is((select count(*)::integer from public.products where slug like 'test-%'), 1, 'authenticated non-admin sees only active published fixture products');
 select throws_ok(
   $$insert into public.products (slug, name, description, category_id, price_paisa, is_active, is_published)
     values ('test-forbidden', 'Forbidden', '', 'f1000000-0000-4000-8000-000000000001', 10000, true, true)$$,

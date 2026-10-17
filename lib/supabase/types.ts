@@ -21,6 +21,7 @@ export type UserRole = "customer" | "admin";
 export type OrderStatus =
   | "pending"
   | "confirmed"
+  | "processing"
   | "shipped"
   | "delivered"
   | "cancelled";
@@ -104,6 +105,12 @@ export type OrderRow = {
   delivery_notes: string | null;
   created_at: string;
   updated_at: string;
+  confirmed_at: string | null;
+  processing_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  paid_at: string | null;
 };
 
 export type OrderItemRow = {
@@ -123,6 +130,15 @@ export type OrderStatusHistoryRow = {
   order_id: string;
   from_status: OrderStatus | null;
   to_status: OrderStatus;
+  changed_by: string | null;
+  created_at: string;
+};
+
+export type OrderPaymentHistoryRow = {
+  id: string;
+  order_id: string;
+  from_status: PaymentStatus | null;
+  to_status: PaymentStatus;
   changed_by: string | null;
   created_at: string;
 };
@@ -278,6 +294,15 @@ export interface Database {
           },
         ];
       };
+      order_payment_history: {
+        Row: OrderPaymentHistoryRow;
+        Insert: Omit<OrderPaymentHistoryRow, "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<OrderPaymentHistoryRow, "id">>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -301,6 +326,18 @@ export interface Database {
       get_order_confirmation: {
         Args: { p_confirmation_token_hash: string };
         Returns: { order_code: string; subtotal_paisa: number; delivery_paisa: number; total_paisa: number; payment_method: PaymentMethod; payment_status: PaymentStatus }[];
+      };
+      admin_transition_order: {
+        Args: { p_order_id: string; p_new_status: OrderStatus };
+        Returns: OrderRow[];
+      };
+      admin_set_order_payment_status: {
+        Args: { p_order_id: string; p_new_status: PaymentStatus };
+        Returns: OrderRow[];
+      };
+      admin_order_summary: {
+        Args: Record<string, never>;
+        Returns: { order_count: number; open_order_count: number; unpaid_order_count: number; delivered_revenue_paisa: number }[];
       };
     };
     Enums: {
