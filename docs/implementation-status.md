@@ -317,3 +317,20 @@ authentication feature set remains unimplemented.
 - Production build remains unverified. Turbopack is blocked by its worker port
   restriction in this environment; the Webpack fallback exits before compiling
   because Next.js receives empty output from TypeScript `--showConfig`.
+
+## Milestone 10 — deployment readiness (2026-10-17)
+
+- Reviewed current official Vercel Next.js/runtime, environment, domain and
+  rollback guidance and Supabase production, Auth redirect, migration and backup
+  guidance. Vercel is documented as a proposed host; this repository has no
+  linked host or production Supabase project.
+- Added `docs/milestone-10-deployment-readiness.md` with compatibility findings,
+  environment variable handling, Supabase hardening and admin setup, DNS/HTTPS,
+  rollback/recovery, and an end-to-end release checklist. Called out that order
+  notifications are not implemented and no live payment integration is enabled.
+- Clarified the local/production environment template without adding credentials.
+- `npm run build` under Node 22 — attempted, blocked by Turbopack's local worker
+  port binding restriction (`Operation not permitted`); no deployment occurred.
+- No Supabase production project or domain was available to configure. No DNS,
+  purchases, hosting account, payment provider, or production database were
+  changed. Production deployment is not approved or performed.
