@@ -291,3 +291,29 @@ authentication feature set remains unimplemented.
 - `npm test`, `npm run lint` and `npx tsc --noEmit` — pass.
 - `npm run build` — blocked by Turbopack's CSS worker failing to bind a local
   port (`Operation not permitted`), including outside the sandbox.
+
+## Milestone 9 — storefront and admin audit (2026-10-17)
+
+### Delivered
+
+- Removed unsupported business claims and a broken order-tracking link; added
+  server-signed catalog image reads from the private Storage bucket with a
+  labeled failure placeholder.
+- Added canonical and social metadata, Product/Offer JSON-LD, a dynamic sitemap
+  and crawler rules for private routes. Added same-origin and request-size guards
+  plus a checkout honeypot, response headers, and improved mobile-nav keyboard
+  behavior and checkout field error associations.
+- Added `docs/milestone-9-risk-checklist.md` to distinguish completed code review
+  from deployment checks and unresolved security risks.
+
+### Verification
+
+- `npm run lint`, `npx tsc --noEmit`, and `npm test` — pass.
+- Local Supabase reset, database tests and database lint — pass; 60 pgTAP
+  assertions across four test files.
+- `npm audit --omit=dev` — pass with no production dependency advisories. Full
+  audit reports five high findings in the development-only ESLint dependency
+  chain; see the risk checklist.
+- Production build remains unverified. Turbopack is blocked by its worker port
+  restriction in this environment; the Webpack fallback exits before compiling
+  because Next.js receives empty output from TypeScript `--showConfig`.

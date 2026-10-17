@@ -13,6 +13,7 @@ import { getCategories, getProducts } from "@/lib/dal/products";
 export const metadata: Metadata = {
   title: "Shop All",
   description: "Browse Nyanopan's handmade wool felt footwear, home decor and accessories.",
+  alternates: { canonical: "/products" },
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;

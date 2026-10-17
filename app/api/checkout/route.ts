@@ -2,24 +2,27 @@ import { createHash } from "node:crypto";
 
 import { validateCheckoutPayload } from "@/lib/checkout/validate.mjs";
 import { createServerClient } from "@/lib/supabase/server";
+import { isSameOriginRequest, readJsonBounded } from "@/lib/http/request-guards.mjs";
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ message: "Send valid checkout details." }, { status: 400 });
+  if (!isSameOriginRequest(request)) return Response.json({ message: "Request origin is not allowed." }, { status: 403, headers: { "Cache-Control": "no-store" } });
+  const parsed = await readJsonBounded(request, 16 * 1024);
+  if (!parsed.ok) return Response.json({ message: parsed.tooLarge ? "Checkout request is too large." : "Send valid checkout details." }, { status: parsed.tooLarge ? 413 : 400, headers: { "Cache-Control": "no-store" } });
+  const body = parsed.value;
+
+  if (body && typeof body === "object" && "website" in body && typeof body.website === "string" && body.website.trim()) {
+    return Response.json({ message: "Please review your checkout details." }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
   const result = validateCheckoutPayload(body);
   if (!result.data) {
-    return Response.json({ message: "Check the highlighted checkout details.", fieldErrors: result.errors }, { status: 400 });
+    return Response.json({ message: "Check the highlighted checkout details.", fieldErrors: result.errors }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
   const raw = body as Record<string, unknown>;
   const uuid = (value: unknown) => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
   if (!uuid(raw.idempotencyKey) || !uuid(raw.confirmationToken)) {
-    return Response.json({ message: "Refresh checkout and try again." }, { status: 400 });
+    return Response.json({ message: "Refresh checkout and try again." }, { status: 400, headers: { "Cache-Control": "no-store" } });
   }
 
   const tokenHash = createHash("sha256").update(raw.confirmationToken as string).digest("hex");
@@ -50,7 +53,7 @@ export async function POST(request: Request) {
         : message.includes("idempotency_conflict")
           ? "This checkout attempt has expired. Start checkout again."
           : "We could not place your order right now. Please try again.";
-    return Response.json({ message: known }, { status: error?.code === "P0001" || error?.code === "22023" ? 409 : 503 });
+    return Response.json({ message: known }, { status: error?.code === "P0001" || error?.code === "22023" ? 409 : 503, headers: { "Cache-Control": "no-store" } });
   }
 
   return Response.json({ confirmationPath: `/orders/confirmation/${raw.confirmationToken}` }, {

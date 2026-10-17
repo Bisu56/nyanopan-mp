@@ -31,6 +31,11 @@ export const metadata: Metadata = {
     locale: "en_NP",
     siteName: siteConfig.name,
   },
+  twitter: {
+    card: "summary",
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
+  },
 };
 
 export const viewport: Viewport = {

@@ -11,9 +11,8 @@ export const siteConfig = {
   name: "Nyanopan",
   tagline: "Handcrafted Wool Feltcraft & Footwear",
   description:
-    "Ethically handmade wool felt slippers, boots, and mindful living goods shaped with pure New Zealand wool and Kathmandu heritage craft.",
-  announcement:
-    "Handcrafted in the Kathmandu Valley • Free delivery inside Ring Road on orders above NPR 2,500 • Worldwide Artisan Shipping",
+    "Browse handcrafted wool felt products from Nyanopan, with current catalog details, availability and NPR prices.",
+  announcement: "Handcrafted wool felt products from Nepal · Browse the current collection",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
 } as const;
 

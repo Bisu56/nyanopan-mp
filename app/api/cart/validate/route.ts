@@ -1,15 +1,14 @@
 import { isCartLines } from "@/lib/cart/model.mjs";
 import { validateCartForCheckout } from "@/lib/dal/products";
+import { isSameOriginRequest, readJsonBounded } from "@/lib/http/request-guards.mjs";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Send a valid JSON cart." }, { status: 400 });
-  }
+  if (!isSameOriginRequest(request)) return Response.json({ error: "Request origin is not allowed." }, { status: 403, headers: { "Cache-Control": "no-store" } });
+  const parsed = await readJsonBounded(request, 16 * 1024);
+  if (!parsed.ok) return Response.json({ error: parsed.tooLarge ? "Cart request is too large." : "Send a valid JSON cart." }, { status: parsed.tooLarge ? 413 : 400, headers: { "Cache-Control": "no-store" } });
+  const body = parsed.value;
 
   if (
     body === null ||

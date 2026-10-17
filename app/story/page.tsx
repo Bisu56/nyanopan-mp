@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 export const metadata: Metadata = {
   title: "Artisan Story",
   description: "The people and heritage craft behind Nyanopan's handmade felt goods.",
+  robots: { index: false, follow: false },
 };
 
 /**

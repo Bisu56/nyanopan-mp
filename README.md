@@ -32,6 +32,10 @@ npm run dev
 
 Open http://localhost:3000.
 
+Use Node.js 22 or newer. Set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS
+storefront URL in production; it supplies canonical metadata and the sitemap.
+The local default is `http://localhost:3000`.
+
 ### Local database
 
 ```bash
@@ -96,6 +100,11 @@ directions. Leave it blank until those directions are confirmed; the receipt
 will advise customers not to send funds yet. Never use a `NEXT_PUBLIC_` variable
 for payment credentials or other secrets.
 
+Public catalog images use short-lived signed URLs from the private Storage
+bucket. Keep the bucket private and do not expose the Supabase service-role key.
+The sitemap includes active, published products; `/robots.txt` excludes admin,
+cart, checkout and private confirmation routes from crawlers.
+
 ### Admin orders and sales
 
 The protected `/admin/orders` list supports order-code search and separate order
@@ -127,6 +136,7 @@ put a service-role key or other secret in a `NEXT_PUBLIC_` variable.
 | `npm run lint` | ESLint (Next.js core-web-vitals + TypeScript rules) |
 | `npm test` | Cart, checkout and admin validation unit tests (Node test runner) |
 | `npx tsc --noEmit` | Standalone type-check |
+| `npm audit --omit=dev` | Audit production dependencies |
 
 ## Project structure
 
@@ -163,3 +173,5 @@ supabase/             Local Supabase config, database migrations and seed data
 See [`docs/implementation-status.md`](docs/implementation-status.md) for the
 milestone-by-milestone status. The Stitch design reference lives in
 [`designs/`](designs/) and is the source of truth for the visual language.
+See [`docs/milestone-9-risk-checklist.md`](docs/milestone-9-risk-checklist.md)
+for launch risks and checks that still need production or browser verification.

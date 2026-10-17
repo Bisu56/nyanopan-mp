@@ -6,6 +6,7 @@ import { formatNpr } from "@/lib/format";
 import type { ProductWithRelations } from "@/lib/dal/products";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { buttonClassName } from "@/components/ui/button";
+import { ProductPhoto } from "@/components/products/product-photo";
 
 export function ProductCard({ product }: { product: ProductWithRelations }) {
   const hasVariants = product.variants.length > 0;
@@ -20,11 +21,17 @@ export function ProductCard({ product }: { product: ProductWithRelations }) {
         className="block focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-surface-container-low">
-          <span className="absolute inset-0 bg-gradient-to-br from-primary-fixed/60 via-surface-container-low to-secondary-container/50" />
-          <span className="relative flex flex-col items-center gap-2 text-on-surface-variant">
-            <ImageOff aria-hidden className="h-8 w-8 opacity-70" />
-            <span className="text-xs font-medium">Product photo coming soon</span>
-          </span>
+          {product.images[0]?.signedUrl ? <ProductPhoto
+            src={product.images[0].signedUrl}
+            alt={product.images[0].alt_text || product.name}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          /> : (
+            <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary-fixed/60 via-surface-container-low to-secondary-container/50 text-on-surface-variant">
+              <ImageOff aria-hidden className="h-8 w-8 opacity-70" />
+              <span className="text-xs font-medium">Product photo coming soon</span>
+            </span>
+          )}
           <Badge tone={inStock ? "sage" : "neutral"} className="absolute left-3 top-3">
             {inStock ? "In stock" : "Out of stock"}
           </Badge>

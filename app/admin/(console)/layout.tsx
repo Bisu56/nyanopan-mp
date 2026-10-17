@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/supabase/require-admin";
 import { AdminSignOut } from "@/components/admin/admin-sign-out";
 import { Container } from "@/components/ui/container";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   return (

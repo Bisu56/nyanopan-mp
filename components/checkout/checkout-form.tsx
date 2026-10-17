@@ -65,6 +65,7 @@ export function CheckoutForm() {
     const attempt = {
       idempotencyKey: crypto.randomUUID(),
       confirmationToken: crypto.randomUUID(),
+      website: "",
       ...fields,
       items: lines,
     };
@@ -130,17 +131,21 @@ export function CheckoutForm() {
       </header>
       {error && <p role="alert" className="mb-6 rounded-xl border border-error-container bg-error-container/30 p-4 text-sm">{error}{retry && <button type="button" className="ml-2 font-bold underline" onClick={() => submission.current && send(submission.current.payload)}>Retry same order</button>}</p>}
       <form onSubmit={submit} className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+          <label htmlFor="checkout-website">Leave this field empty</label>
+          <input id="checkout-website" name="website" tabIndex={-1} autoComplete="off" value="" readOnly />
+        </div>
         <div className="space-y-7">
           <fieldset disabled={locked} className="space-y-5 rounded-2xl border border-surface-container-highest bg-white p-5 sm:p-7">
             <legend className="px-2 font-serif text-xl font-bold">Your information</legend>
             <div>
               <label className={label} htmlFor="customerName">Full name</label>
-              <input className={input} id="customerName" autoComplete="name" maxLength={120} required value={fields.customerName} aria-describedby={fieldErrors.customerName ? "customerName-error" : undefined} onChange={(e) => set("customerName", e.target.value)} />
+              <input className={input} id="customerName" autoComplete="name" maxLength={120} required value={fields.customerName} aria-invalid={Boolean(fieldErrors.customerName)} aria-describedby={fieldErrors.customerName ? "customerName-error" : undefined} onChange={(e) => set("customerName", e.target.value)} />
               {fieldError("customerName")}
             </div>
             <div>
               <label className={label} htmlFor="phone">Phone number</label>
-              <input className={input} id="phone" type="tel" autoComplete="tel" maxLength={24} required value={fields.phone} aria-describedby={fieldErrors.phone ? "phone-error" : undefined} onChange={(e) => set("phone", e.target.value)} />
+              <input className={input} id="phone" type="tel" autoComplete="tel" maxLength={24} required value={fields.phone} aria-invalid={Boolean(fieldErrors.phone)} aria-describedby={fieldErrors.phone ? "phone-error" : undefined} onChange={(e) => set("phone", e.target.value)} />
               {fieldError("phone")}
             </div>
           </fieldset>
@@ -149,29 +154,29 @@ export function CheckoutForm() {
             <legend className="px-2 font-serif text-xl font-bold">Delivery address</legend>
             <div>
               <label className={label} htmlFor="province">Province</label>
-              <select className={input} id="province" required value={fields.province} onChange={(e) => set("province", e.target.value)}>
+              <select className={input} id="province" required value={fields.province} aria-invalid={Boolean(fieldErrors.province)} aria-describedby={fieldErrors.province ? "province-error" : undefined} onChange={(e) => set("province", e.target.value)}>
                 <option value="">Select province</option>{provinces.map((p) => <option key={p}>{p}</option>)}
               </select>{fieldError("province")}
             </div>
             <div>
               <label className={label} htmlFor="district">District</label>
-              <input className={input} id="district" autoComplete="address-level2" maxLength={100} required value={fields.district} onChange={(e) => set("district", e.target.value)} />{fieldError("district")}
+              <input className={input} id="district" autoComplete="address-level2" maxLength={100} required value={fields.district} aria-invalid={Boolean(fieldErrors.district)} aria-describedby={fieldErrors.district ? "district-error" : undefined} onChange={(e) => set("district", e.target.value)} />{fieldError("district")}
             </div>
             <div>
               <label className={label} htmlFor="municipality">Municipality / rural municipality</label>
-              <input className={input} id="municipality" maxLength={120} required value={fields.municipality} onChange={(e) => set("municipality", e.target.value)} />{fieldError("municipality")}
+              <input className={input} id="municipality" maxLength={120} required value={fields.municipality} aria-invalid={Boolean(fieldErrors.municipality)} aria-describedby={fieldErrors.municipality ? "municipality-error" : undefined} onChange={(e) => set("municipality", e.target.value)} />{fieldError("municipality")}
             </div>
             <div>
               <label className={label} htmlFor="ward">Ward number</label>
-              <input className={input} id="ward" inputMode="numeric" maxLength={32} required value={fields.ward} onChange={(e) => set("ward", e.target.value)} />{fieldError("ward")}
+              <input className={input} id="ward" inputMode="numeric" maxLength={32} required value={fields.ward} aria-invalid={Boolean(fieldErrors.ward)} aria-describedby={fieldErrors.ward ? "ward-error" : undefined} onChange={(e) => set("ward", e.target.value)} />{fieldError("ward")}
             </div>
             <div className="sm:col-span-2">
               <label className={label} htmlFor="fullAddress">Full address, landmark or tole</label>
-              <textarea className={input} id="fullAddress" rows={3} maxLength={500} required value={fields.fullAddress} onChange={(e) => set("fullAddress", e.target.value)} />{fieldError("fullAddress")}
+              <textarea className={input} id="fullAddress" rows={3} maxLength={500} required value={fields.fullAddress} aria-invalid={Boolean(fieldErrors.fullAddress)} aria-describedby={fieldErrors.fullAddress ? "fullAddress-error" : undefined} onChange={(e) => set("fullAddress", e.target.value)} />{fieldError("fullAddress")}
             </div>
             <div className="sm:col-span-2">
               <label className={label} htmlFor="deliveryNotes">Delivery notes <span className="font-normal text-on-surface-variant">(optional)</span></label>
-              <textarea className={input} id="deliveryNotes" rows={2} maxLength={500} value={fields.deliveryNotes} onChange={(e) => set("deliveryNotes", e.target.value)} />{fieldError("deliveryNotes")}
+              <textarea className={input} id="deliveryNotes" rows={2} maxLength={500} value={fields.deliveryNotes} aria-invalid={Boolean(fieldErrors.deliveryNotes)} aria-describedby={fieldErrors.deliveryNotes ? "deliveryNotes-error" : undefined} onChange={(e) => set("deliveryNotes", e.target.value)} />{fieldError("deliveryNotes")}
             </div>
           </fieldset>
 

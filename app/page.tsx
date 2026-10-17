@@ -1,66 +1,69 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
-  Droplets,
   Footprints,
   Gift,
-  Hand,
   Home,
   ImageOff,
-  Leaf,
   Shirt,
   Sparkles,
-  Truck,
-  Users,
+  BadgeCheck,
+  Banknote,
+  PackageCheck,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { FeaturedProducts } from "@/components/products/featured-products";
+import { siteConfig } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: { absolute: `${siteConfig.name} — ${siteConfig.tagline}` },
+  description: siteConfig.description,
+  alternates: { canonical: "/" },
+};
 
 /*
  * Home page — hero and trust strip ported from the Stitch design
  * (designs/src/views/HomeView.tsx).
  *
- * Excluded on purpose (engineering rule #8, no invented content):
- * - the design's testimonials (fabricated reviews with fake names)
- * - the design's featured-product grid (demo products with demo prices)
- * - hotlinked Google-hosted demo photography (not Nyanopan's assets)
- * Product photos remain intentionally empty until Nyanopan assets are supplied.
+ * Demo testimonials and photography from Stitch were excluded. Product photos
+ * use uploaded catalog assets when available and an honest placeholder otherwise.
  */
 
 const trustItems = [
-  { icon: Hand, title: "Handmade in Nepal", subtitle: "Kathmandu & Patan craft" },
-  { icon: Droplets, title: "Chemical-Free Felting", subtitle: "Water, olive soap & sun" },
-  { icon: Users, title: "Fair Wage Collective", subtitle: "Women-led social craft" },
-  { icon: Truck, title: "Pan-Nepal & Global", subtitle: "7 Provinces & Worldwide" },
+  { icon: BadgeCheck, title: "Current catalog", subtitle: "Product details from the shop" },
+  { icon: Banknote, title: "NPR pricing", subtitle: "Prices shown in Nepali rupees" },
+  { icon: PackageCheck, title: "Availability checks", subtitle: "Stock rechecked at checkout" },
+  { icon: Sparkles, title: "Payment choices", subtitle: "COD or manual payment" },
 ] as const;
 
 const collections = [
   {
     icon: Footprints,
     title: "Felt Footwear",
-    description: "Seamless slippers, mules and indoor boots felted to shape.",
+    description: "Browse available felt footwear in the current catalog.",
     href: "/products?category=footwear",
   },
   {
     icon: Home,
     title: "Home Decor",
-    description: "Felt ball rugs, trivets, coasters and pet caves for mindful homes.",
+    description: "Browse available felt home goods in the current catalog.",
     href: "/products?category=home-decor",
   },
   {
     icon: Shirt,
     title: "Accessories",
-    description: "Everyday wool felt goods, dryers balls and small treasures.",
+    description: "Browse available felt accessories in the current catalog.",
     href: "/products?category=accessories",
   },
   {
     icon: Gift,
     title: "Gifting",
-    description: "Thoughtful handcrafted gift sets, made in small artisan batches.",
+    description: "Browse products listed in the gifting collection.",
     href: "/products?category=gifting",
   },
 ] as const;
@@ -76,7 +79,7 @@ export default function HomePage() {
             <div className="z-10 flex flex-col items-start lg:col-span-7">
               <Badge tone="neutral" className="mb-6 uppercase tracking-wider">
                 <span aria-hidden className="h-2 w-2 rounded-full bg-secondary" />
-                Handmade in the Patan Valley
+                Handcrafted wool felt goods from Nepal
               </Badge>
 
               <h1 className="mb-4 font-serif text-4xl font-bold tracking-tight text-on-surface sm:text-5xl lg:text-[56px] lg:leading-[64px]">
@@ -86,9 +89,8 @@ export default function HomePage() {
               </h1>
 
               <p className="mb-8 max-w-xl text-base leading-relaxed text-on-surface-variant sm:text-lg">
-                Ethically handmade wool felt slippers, boots, and mindful living goods shaped
-                with pure New Zealand wool and Kathmandu heritage craft. Made with care. Rooted
-                in Nepal.
+                Browse the current collection of handcrafted wool felt products. Product details,
+                prices, and availability come from the Nyanopan catalog.
               </p>
 
               <div className="flex w-full flex-col items-stretch gap-4 sm:w-auto sm:flex-row sm:items-center">
@@ -100,34 +102,13 @@ export default function HomePage() {
                   <ArrowRight aria-hidden className="h-[18px] w-[18px]" />
                 </Link>
                 <Link href="/story" className={buttonClassName({ variant: "secondary", size: "lg" })}>
-                  Discover Our Artisan Collective
+                Read our story
                 </Link>
               </div>
 
-              {/* Metrics — brand claims carried over from the supplied design */}
-              <dl className="mt-6 grid w-full max-w-lg grid-cols-3 gap-6 border-t border-surface-container-highest pt-8">
-                <div>
-                  <dt className="sr-only">Natural highland wool</dt>
-                  <dd>
-                    <p className="font-serif text-2xl font-bold text-primary">100%</p>
-                    <p className="text-xs text-on-surface-variant">Natural Highland Wool</p>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="sr-only">Women artisans</dt>
-                  <dd>
-                    <p className="font-serif text-2xl font-bold text-on-surface">84+</p>
-                    <p className="text-xs text-on-surface-variant">Women Artisans</p>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="sr-only">Glues or synthetics</dt>
-                  <dd>
-                    <p className="font-serif text-2xl font-bold text-secondary">0</p>
-                    <p className="text-xs text-on-surface-variant">Glues or Synthetics</p>
-                  </dd>
-                </div>
-              </dl>
+              <p className="mt-7 border-t border-surface-container-highest pt-5 text-sm text-on-surface-variant">
+                Explore current products, prices, and availability in the shop.
+              </p>
             </div>
 
             {/* Visual showcase — branded placeholder until Nyanopan photography arrives */}
@@ -137,39 +118,12 @@ export default function HomePage() {
                   <ImageOff aria-hidden className="h-7 w-7" />
                 </span>
                 <p className="text-sm font-semibold text-on-surface">
-                  Studio photography arriving soon
+                  Product photography
                 </p>
                 <p className="max-w-[16rem] text-xs leading-relaxed text-on-surface-variant">
-                  Product photos will be added to{" "}
-                  <code className="rounded bg-surface-container px-1 py-0.5">
-                    public/images/products/
-                  </code>{" "}
-                  and served from Supabase Storage.
+                Product photos appear here when available in the catalog.
                 </p>
 
-                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 rounded-xl border border-surface-container-highest bg-white/95 p-4 shadow-xs backdrop-blur-md">
-                  <div className="flex items-center gap-3">
-                    <Leaf aria-hidden className="h-6 w-6 text-primary" />
-                    <div>
-                      <p className="text-xs font-bold text-on-surface">100% Organic Wool</p>
-                      <p className="text-[11px] text-on-surface-variant">
-                        Lalitpur Heritage Workshop
-                      </p>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-secondary-container px-2.5 py-1 text-[10px] font-bold text-on-secondary-container">
-                    Hand-felted
-                  </span>
-                </div>
-              </div>
-
-              <div className="absolute -right-3 -top-3 hidden flex-col items-center rounded-xl border border-surface-container-highest bg-white px-3.5 py-2 shadow-md sm:flex">
-                <span className="font-serif text-base font-bold italic text-primary">
-                  Seamless
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">
-                  Hand-Wet Felted
-                </span>
               </div>
             </div>
           </div>
@@ -213,8 +167,7 @@ export default function HomePage() {
               </h2>
             </div>
             <p className="max-w-md text-sm text-on-surface-variant">
-              Explore our collections shaped by hand in small artisan batches using traditional
-              wet compression.
+              Browse the products currently listed across the shop&apos;s collections.
             </p>
           </div>
 

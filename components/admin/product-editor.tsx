@@ -4,18 +4,20 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { CategoryRow, ProductImageRow, ProductRow, ProductVariantRow } from "@/lib/supabase/types";
 import { buttonClassName } from "@/components/ui/button";
+import { ProductPhoto } from "@/components/products/product-photo";
 
 type ProductDraft = {
   slug: string; name: string; description: string; category_id: string;
   price_paisa: number; stock_quantity: number; is_active: boolean; is_published: boolean;
 };
 const blank: ProductDraft = { slug: "", name: "", description: "", category_id: "", price_paisa: 0, stock_quantity: 0, is_active: false, is_published: false };
+type ProductImagePreview = ProductImageRow & { signedUrl?: string | null };
 
 export function ProductEditor({ product, categories, variants = [], images = [] }: {
   product: ProductRow | null;
   categories: CategoryRow[];
   variants?: ProductVariantRow[];
-  images?: ProductImageRow[];
+  images?: ProductImagePreview[];
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState<ProductDraft>(product ? {
@@ -92,7 +94,7 @@ export function ProductEditor({ product, categories, variants = [], images = [] 
         {product && (
           <section className="rounded-2xl border border-surface-container-highest bg-white p-5">
             <h2 className="font-serif text-lg font-bold">Product images</h2>
-            {images.length > 0 ? <ul className="mt-3 space-y-2 text-sm">{images.map((image) => <li key={image.id} className="break-all">{image.alt_text || "Image"}<span className="block text-xs text-on-surface-variant">{image.storage_path}</span></li>)}</ul> : <p className="mt-2 text-sm text-on-surface-variant">No uploaded images.</p>}
+            {images.length > 0 ? <ul className="mt-3 grid grid-cols-2 gap-3 text-sm">{images.map((image) => <li key={image.id} className="min-w-0"><div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-surface-container-low">{image.signedUrl ? <ProductPhoto src={image.signedUrl} alt={image.alt_text || "Product photo"} sizes="320px" /> : <div className="grid h-full place-items-center text-xs text-on-surface-variant">Preview unavailable</div>}</div><span className="mt-1 block truncate text-xs text-on-surface-variant">{image.alt_text || "Image"}</span></li>)}</ul> : <p className="mt-2 text-sm text-on-surface-variant">No uploaded images.</p>}
             <label className={label + " mt-5"} htmlFor="product-image">Upload image (max 5 MiB)</label>
             <input id="product-image" className={input} type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             <label className={label + " mt-4"} htmlFor="image-alt">Image description</label>

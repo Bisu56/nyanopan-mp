@@ -17,6 +17,7 @@
  */
 
 import "server-only";
+import { cache } from "react";
 
 import { createServerClient } from "@/lib/supabase/server";
 import type {
@@ -40,7 +41,23 @@ export interface DalResult<T> {
 export interface ProductWithRelations extends ProductRow {
   category: Pick<CategoryRow, "id" | "slug" | "name"> | null;
   variants: ProductVariantRow[];
-  images: ProductImageRow[];
+  images: (ProductImageRow & { signedUrl?: string | null })[];
+}
+
+async function addPrimaryImageUrls(products: ProductWithRelations[]) {
+  const paths = [...new Set(products.map((product) => product.images[0]?.storage_path).filter((path): path is string => Boolean(path)))];
+  if (paths.length === 0) return products;
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.storage.from("product-images").createSignedUrls(paths, 60 * 60);
+  if (error) {
+    console.error("[DAL] Signed catalog images unavailable.");
+    return products;
+  }
+  const urls = new Map((data ?? []).flatMap((item) => item.path && item.signedUrl ? [[item.path, item.signedUrl] as const] : []));
+  return products.map((product) => product.images.length ? {
+    ...product,
+    images: product.images.map((image, index) => index === 0 ? { ...image, signedUrl: urls.get(image.storage_path) ?? null } : image),
+  } : product);
 }
 
 export interface CartQuoteItem {
@@ -218,16 +235,16 @@ export async function getProducts(
     ),
   }));
 
-  return { data: products as ProductWithRelations[], error: null };
+  return { data: await addPrimaryImageUrls(products as ProductWithRelations[]), error: null };
 }
 
 /**
  * Fetch a single active product by slug, with category, variants and images.
  * Returns `data: null` (no error) if the product doesn't exist or is inactive.
  */
-export async function getProductBySlug(
+export const getProductBySlug = cache(async (
   slug: string,
-): Promise<DalResult<ProductWithRelations>> {
+): Promise<DalResult<ProductWithRelations>> => {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -263,8 +280,9 @@ export async function getProductBySlug(
     ),
   };
 
-  return { data: product, error: null };
-}
+  const [withImage] = await addPrimaryImageUrls([product]);
+  return { data: withImage, error: null };
+});
 
 /**
  * Fetch multiple products by their IDs.

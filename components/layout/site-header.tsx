@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, ShoppingBag, X } from "lucide-react";
 
 import { Container } from "@/components/ui/container";
@@ -10,7 +10,10 @@ import { mainNavLinks, siteConfig } from "@/lib/site";
 import { useCart } from "@/components/cart/cart-provider";
 
 function isActivePath(pathname: string, href: string): boolean {
-  const [path] = href.split("?");
+  const [path, query] = href.split("?");
+  // The catalog links with filters share one pathname. Keep the general
+  // Shop All link as the only active navigation item on that route.
+  if (query) return false;
   if (path === "/") return pathname === "/";
   return pathname === path || pathname.startsWith(`${path}/`);
 }
@@ -29,6 +32,24 @@ export function SiteHeader() {
   const pathname = usePathname();
   const { itemCount, ready } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    function handleHistoryNavigation() { setMobileMenuOpen(false); }
+    window.addEventListener("popstate", handleHistoryNavigation);
+    return () => window.removeEventListener("popstate", handleHistoryNavigation);
+  }, []);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileMenuOpen(false);
+        menuButton.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-surface-container-highest/50 bg-surface/95 shadow-[0_1px_8px_rgba(42,35,30,0.04)] backdrop-blur-md">
@@ -70,7 +91,7 @@ export function SiteHeader() {
                 key={link.label}
                 href={link.href}
                 aria-current={isActive ? "page" : undefined}
-                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                   isActive
                     ? "bg-primary-container text-on-primary-container shadow-xs"
                     : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
@@ -87,7 +108,7 @@ export function SiteHeader() {
           <Link
             href="/cart"
             aria-label={ready && itemCount > 0 ? `Shopping bag, ${itemCount} ${itemCount === 1 ? "item" : "items"}` : "Shopping bag"}
-            className={`relative rounded-full p-2 transition-colors ${
+            className={`relative rounded-full p-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               isActivePath(pathname, "/cart")
                 ? "bg-primary text-white"
                 : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
@@ -105,8 +126,9 @@ export function SiteHeader() {
           </Link>
 
           <button
+            ref={menuButton}
             type="button"
-            className="rounded-lg p-2 text-on-surface-variant hover:text-on-surface lg:hidden"
+            className="rounded-lg p-2 text-on-surface-variant hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:hidden"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav"
@@ -137,7 +159,7 @@ export function SiteHeader() {
                     href={link.href}
                     aria-current={isActive ? "page" : undefined}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                       isActive
                         ? "bg-surface-container text-primary"
                         : "text-on-surface hover:bg-surface-container"

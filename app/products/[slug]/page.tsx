@@ -9,6 +9,8 @@ import { buttonClassName } from "@/components/ui/button";
 import { getProductBySlug } from "@/lib/dal/products";
 import { formatNpr } from "@/lib/format";
 import { ProductPurchaseOptions } from "@/components/products/product-purchase-options";
+import { siteConfig } from "@/lib/site";
+import { ProductPhoto } from "@/components/products/product-photo";
 
 type ProductPageProps = { params: Promise<{ slug: string }> };
 
@@ -19,7 +21,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   return {
     title: result.data.name,
-    description: result.data.description,
+    description: result.data.description.trim().slice(0, 160) || `View ${result.data.name} in the Nyanopan catalog.`,
+    alternates: { canonical: `/products/${result.data.slug}` },
+    openGraph: {
+      title: result.data.name,
+      description: result.data.description.trim().slice(0, 160) || `View ${result.data.name} in the Nyanopan catalog.`,
+      type: "website",
+    },
   };
 }
 
@@ -50,9 +58,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const inStock = hasVariants
     ? availableVariants.some((variant) => variant.stock_quantity > 0)
     : product.stock_quantity > 0;
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    brand: { "@type": "Brand", name: "Nyanopan" },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "NPR",
+      price: (product.price_paisa / 100).toFixed(2),
+      availability: `https://schema.org/${inStock ? "InStock" : "OutOfStock"}`,
+      url: `${siteConfig.url.replace(/\/+$/, "")}/products/${product.slug}`,
+    },
+  };
+  const safeProductJsonLd = JSON.stringify(productJsonLd).replace(/</g, "\\u003c");
 
   return (
     <Container className="py-8 sm:py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeProductJsonLd }} />
       <nav aria-label="Breadcrumb" className="mb-6 text-sm text-on-surface-variant">
         <Link href="/products" className="hover:text-primary">Shop</Link>
         {product.category && (
@@ -68,11 +92,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-        <div className="flex aspect-square min-h-64 items-center justify-center overflow-hidden rounded-3xl border border-surface-container-highest bg-gradient-to-br from-primary-fixed/70 via-surface-container-low to-secondary-container/60">
-          <div className="flex flex-col items-center gap-3 text-center text-on-surface-variant">
+        <div className="relative flex aspect-square min-h-64 items-center justify-center overflow-hidden rounded-3xl border border-surface-container-highest bg-gradient-to-br from-primary-fixed/70 via-surface-container-low to-secondary-container/60">
+          {product.images[0]?.signedUrl ? <ProductPhoto src={product.images[0].signedUrl} alt={product.images[0].alt_text || product.name} sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" priority /> : <div className="flex flex-col items-center gap-3 text-center text-on-surface-variant">
             <ImageOff aria-hidden className="h-10 w-10 opacity-70" />
             <p className="text-sm font-medium">Product photo coming soon</p>
-          </div>
+          </div>}
         </div>
 
         <div className="flex flex-col items-start">

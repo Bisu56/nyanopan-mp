@@ -16,5 +16,11 @@ export default async function EditAdminProductPage({ params }: { params: Promise
   ]);
   if (productError || !product) notFound();
   if (categoryError || variantError || imageError) return <p role="alert">Could not load all product management details.</p>;
-  return <section><p className="mb-2 text-sm font-semibold uppercase tracking-wide text-secondary">Catalog</p><h1 className="mb-6 font-serif text-3xl font-bold">Edit {product.name}</h1><ProductEditor product={product} categories={categories ?? []} variants={variants ?? []} images={images ?? []} /></section>;
+  const productImages = images ?? [];
+  const { data: signed } = productImages.length
+    ? await supabase.storage.from("product-images").createSignedUrls(productImages.map((image) => image.storage_path), 60 * 60)
+    : { data: [] };
+  const urls = new Map((signed ?? []).flatMap((image) => image.path && image.signedUrl ? [[image.path, image.signedUrl] as const] : []));
+  const imagesForEditor = productImages.map((image) => ({ ...image, signedUrl: urls.get(image.storage_path) ?? null }));
+  return <section><p className="mb-2 text-sm font-semibold uppercase tracking-wide text-secondary">Catalog</p><h1 className="mb-6 font-serif text-3xl font-bold">Edit {product.name}</h1><ProductEditor product={product} categories={categories ?? []} variants={variants ?? []} images={imagesForEditor} /></section>;
 }
