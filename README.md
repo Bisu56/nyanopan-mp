@@ -61,6 +61,7 @@ operate on the local development stack.
 app/                  Routes (App Router). Each route owns loading/error states.
 components/
   layout/             Site-wide shell: header, footer
+  products/           Catalog cards, filters and featured product list
   ui/                 Reusable presentational components (Button, Badge, …)
 lib/                  Helpers and configuration (no React)
 docs/                 Implementation status and engineering notes

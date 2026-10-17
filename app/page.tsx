@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -17,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { FeaturedProducts } from "@/components/products/featured-products";
 
 /*
  * Home page — hero and trust strip ported from the Stitch design
@@ -26,7 +28,7 @@ import { Container } from "@/components/ui/container";
  * - the design's testimonials (fabricated reviews with fake names)
  * - the design's featured-product grid (demo products with demo prices)
  * - hotlinked Google-hosted demo photography (not Nyanopan's assets)
- * Product grids and real photography arrive in Milestone 3.
+ * Product photos remain intentionally empty until Nyanopan assets are supplied.
  */
 
 const trustItems = [
@@ -242,6 +244,22 @@ export default function HomePage() {
           </ul>
         </Container>
       </section>
+
+      <Suspense
+        fallback={
+          <Container className="py-14" role="status" aria-label="Loading products">
+            <div className="mb-6 h-8 w-64 animate-pulse rounded-lg bg-surface-container-high" />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }, (_, index) => (
+                <div key={index} className="aspect-[4/5] animate-pulse rounded-2xl bg-surface-container-high" />
+              ))}
+            </div>
+            <span className="sr-only">Loading products…</span>
+          </Container>
+        }
+      >
+        <FeaturedProducts />
+      </Suspense>
     </div>
   );
 }

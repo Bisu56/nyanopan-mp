@@ -1,6 +1,6 @@
 # Implementation Status
 
-Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (Milestone 2 complete)**.
+Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (Milestone 3 complete)**.
 
 ## Milestones
 
@@ -8,7 +8,7 @@ Living checklist maintained at the end of every milestone. Last updated: **2026-
 | --- | --- | --- |
 | 1 | Foundation: repo hygiene, design tokens, UI kit, site shell | ✅ Complete |
 | 2 | Local Supabase CLI, schema migrations + RLS, placeholder seed data | ✅ Complete |
-| 3 | Product browsing: home catalog, filters, product detail | ⬜ Not started |
+| 3 | Product browsing: home catalog, filters, product detail | ✅ Complete |
 | 4 | Cart: client cart store, cart page, quantity controls | ⬜ Not started |
 | 5 | Auth: Supabase signup/login/logout, session DAL, admin role | ⬜ Not started |
 | 6 | Checkout & orders (guest allowed), COD, atomic stock decrement | ⬜ Not started |
@@ -98,9 +98,44 @@ Living checklist maintained at the end of every milestone. Last updated: **2026-
 - Replace placeholder catalog rows with owner-verified product details before
   presenting them as real products. Product photography is still pending.
 
+## Milestone 3 — complete (2026-10-17)
+
+### Delivered
+
+- **Home catalog:** the homepage now streams a four-product selection from the
+  active Supabase catalog, with a loading skeleton and clear unavailable/empty
+  states.
+- **Catalog route:** `/products` displays active products and supports server-side
+  category, product-name search, price-range and sort filters through URL query
+  parameters. Invalid categories return an empty state.
+- **Product details:** `/products/[slug]` reads active products from the DAL,
+  displays the catalog description, NPR price, stock availability and active
+  variants, and returns the not-found UI for missing or inactive slugs.
+- **Reusable storefront UI:** product cards, accessible GET filter controls, and
+  route-specific loading and error states were added. No add-to-cart behavior was
+  added; cart interactions belong to Milestone 4.
+
+### Decisions and remaining inputs
+
+- Stitch demo photos, ratings, reviews, color claims and batch claims were excluded.
+  Cards and detail pages show a labeled photo placeholder until Nyanopan provides
+  images and the Storage bucket is configured.
+- The local database still contains clearly labelled sample rows. Supply verified
+  product names, descriptions, prices, sizes and stock before launch.
+
+### Verification
+
+- `npm run lint` — pass.
+- `npx tsc --noEmit` — pass.
+- Local HTTP smoke checks — home, catalog, filtered catalog and active product
+  detail returned 200; a missing slug rendered the not-found UI and `noindex`.
+- `npm run build` — attempted in sandbox and with elevated execution; Turbopack
+  fails while binding a local port (`Operation not permitted`). Production build
+  remains unverified in this environment.
+
 ## Known gaps / pending inputs from the owner
 
-- Real product catalog data (names, prices, sizes, stock) — needed before real products can be shown in Milestone 3.
+- Real product catalog data (names, descriptions, prices, sizes, stock) — replace the sample rows before launch.
 - Product photography — drop into `public/images/products/`.
 - Confirmation of the announcement-bar delivery policy and artisan-count claims.
 - Supabase: local CLI setup is verified; hosted project later — only `.env` values change.

@@ -92,6 +92,13 @@ export async function getCategoryBySlug(
 interface GetProductsOptions {
   /** Filter by category slug (e.g. "footwear"). Omit to return all. */
   categorySlug?: string;
+  /** Match part of a product name. */
+  search?: string;
+  /** Inclusive price limits in integer paisa. */
+  minPricePaisa?: number;
+  maxPricePaisa?: number;
+  /** One of the catalog's supported sort orders. */
+  sort?: "newest" | "price-asc" | "price-desc";
   /** Number of products to return. Defaults to 48. */
   limit?: number;
   /** Offset for pagination. Defaults to 0. */
@@ -105,7 +112,15 @@ interface GetProductsOptions {
 export async function getProducts(
   options: GetProductsOptions = {},
 ): Promise<DalResult<ProductWithRelations[]>> {
-  const { categorySlug, limit = 48, offset = 0 } = options;
+  const {
+    categorySlug,
+    search,
+    minPricePaisa,
+    maxPricePaisa,
+    sort = "newest",
+    limit = 48,
+    offset = 0,
+  } = options;
   const supabase = await createServerClient();
 
   let query = supabase
@@ -119,17 +134,28 @@ export async function getProducts(
     `,
     )
     .eq("is_active", true)
-    .order("created_at", { ascending: false })
+    .order(sort === "newest" ? "created_at" : "price_paisa", {
+      ascending: sort === "price-asc",
+    })
     .range(offset, offset + limit - 1);
 
+  const normalizedSearch = search?.trim().slice(0, 80);
+  if (normalizedSearch) query = query.ilike("name", `%${normalizedSearch}%`);
+  if (minPricePaisa !== undefined) query = query.gte("price_paisa", minPricePaisa);
+  if (maxPricePaisa !== undefined) query = query.lte("price_paisa", maxPricePaisa);
+
   if (categorySlug) {
-    // Join through categories to filter by slug. We use a sub-select approach:
-    // first resolve the category id, then filter products by it.
-    const { data: cat } = await supabase
+    // Resolve the category first so the filter stays on a typed product column.
+    const { data: cat, error: categoryError } = await supabase
       .from("categories")
       .select("id")
       .eq("slug", categorySlug)
-      .single();
+      .maybeSingle();
+
+    if (categoryError) {
+      console.error("[DAL] getProducts category lookup error:", categoryError.message);
+      return { data: null, error: categoryError.message };
+    }
 
     if (!cat) {
       // Unknown category slug — return empty rather than erroring.
@@ -151,7 +177,7 @@ export async function getProducts(
     ...p,
     variants: (p.variants ?? []).sort(
       (a: ProductVariantRow, b: ProductVariantRow) =>
-        a.size_label.localeCompare(b.size_label),
+        a.size_label.localeCompare(b.size_label, undefined, { numeric: true }),
     ),
     images: (p.images ?? []).sort(
       (a: ProductImageRow, b: ProductImageRow) => a.sort_order - b.sort_order,
@@ -182,10 +208,9 @@ export async function getProductBySlug(
     )
     .eq("slug", slug)
     .eq("is_active", true)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === "PGRST116") return { data: null, error: null };
     console.error("[DAL] getProductBySlug error:", error.message);
     return { data: null, error: error.message };
   }
@@ -196,7 +221,7 @@ export async function getProductBySlug(
     ...data,
     variants: (data.variants ?? []).sort(
       (a: ProductVariantRow, b: ProductVariantRow) =>
-        a.size_label.localeCompare(b.size_label),
+        a.size_label.localeCompare(b.size_label, undefined, { numeric: true }),
     ),
     images: (data.images ?? []).sort(
       (a: ProductImageRow, b: ProductImageRow) => a.sort_order - b.sort_order,
