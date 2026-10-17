@@ -60,6 +60,27 @@ Only users with an admin profile can read or modify bucket objects. Public produ
 image delivery must use short-lived signed URLs created server-side after checking
 the product's active and published state; never make this bucket public.
 
+### Administrator access
+
+The admin console is at `/admin`; sign in at `/admin/login` using a Supabase Auth
+email/password account. There is no public administrator sign-up. New Auth users
+receive a `customer` profile. To authorize an administrator, a trusted operator
+must verify the person out of band, find the account UUID in Supabase Auth, then
+promote that UUID in the SQL editor:
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = 'AUTH-USER-UUID'::uuid;
+```
+
+The public API cannot insert or update profiles, and ordinary users cannot
+change their role. Protected pages and each admin API handler verify the
+cookie-backed JWT and the database profile role. Catalog mutations use the
+request-bound Supabase client, so database and private Storage RLS independently
+enforce the administrator role. Image uploads accept JPEG, PNG, WebP and AVIF up
+to 5 MiB; the private bucket also validates content type and RLS authorization.
+
 The shopping bag is saved in versioned browser storage with product IDs, optional
 variant IDs and quantities only. Product names, prices and stock are fetched from
 the server. `/api/cart/validate` recalculates the current subtotal and checks
@@ -89,7 +110,7 @@ put a service-role key or other secret in a `NEXT_PUBLIC_` variable.
 | `npm run dev` | Development server |
 | `npm run build` | Production build (fails on type errors) |
 | `npm run lint` | ESLint (Next.js core-web-vitals + TypeScript rules) |
-| `npm test` | Cart and checkout validation unit tests (Node test runner) |
+| `npm test` | Cart, checkout and admin validation unit tests (Node test runner) |
 | `npx tsc --noEmit` | Standalone type-check |
 
 ## Project structure
@@ -116,6 +137,8 @@ supabase/             Local Supabase config, database migrations and seed data
 - Row Level Security is enabled on every table; public read, admin write.
 - Guest order creation uses a restricted server-side database function; anonymous
   direct reads are revoked and confirmation lookup returns no personal data.
+- Administrator roles are assigned only by a trusted database operator; the
+  `/admin` console has per-request authorization and admin-only RLS writes.
 - Secrets and `.env.local` are never committed (`.env.example` is the template).
 - No real product data, reviews or business claims are invented; placeholder
   content is clearly labelled until the owner supplies verified material.

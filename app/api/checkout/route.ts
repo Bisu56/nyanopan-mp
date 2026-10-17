@@ -3,8 +3,6 @@ import { createHash } from "node:crypto";
 import { validateCheckoutPayload } from "@/lib/checkout/validate.mjs";
 import { createServerClient } from "@/lib/supabase/server";
 
-export const runtime = "nodejs";
-
 export async function POST(request: Request) {
   let body: unknown;
   try {

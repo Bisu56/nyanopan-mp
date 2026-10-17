@@ -227,7 +227,7 @@ authentication feature set remains unimplemented.
 - `npm run lint` — pass.
 - `npx tsc --noEmit` — pass.
 - `git diff --check` — pass.
-- Local checkout migration applied; `npx supabase test db` — pass (20 pgTAP
+- Local checkout migration applied; `npx supabase test db` — pass (21 pgTAP
   assertions across catalog RLS and checkout integration tests).
 - `npx supabase db lint --local --schema public --level error` — pass.
 
@@ -236,3 +236,29 @@ authentication feature set remains unimplemented.
 - Delivery is stored as zero until the owner confirms delivery pricing.
 - Supply verified manual payment instructions in a server-only environment
   variable before advertising manual payment.
+## Milestone 7 — admin management
+
+### Delivered
+
+- Admin email/password sign-in at `/admin/login` and a protected console at
+  `/admin`. There is no public admin registration.
+- Server layouts and each API mutation validate the cookie-backed Supabase JWT
+  and the profile role. The current user's profile role is a protected database
+  authorization record; the public API cannot update or insert profiles. Trusted
+  operators provision admins by account UUID as documented in README.
+- Protected management for product and category create/read/update/delete,
+  product active/published state, base and variant stock, and product image
+  uploads. Uploads validate JPEG, PNG, WebP or AVIF signatures and a 5 MiB cap,
+  then use the request-bound authenticated client and existing private Storage
+  policies. No service-role key is used.
+- Admin validation unit tests and database tests for denied customer writes,
+  role-promotion denial, and successful admin catalog writes.
+
+### Verification
+
+- Local admin migration applied; `npx supabase test db` — pass (35 assertions
+  across admin access, catalog RLS and checkout).
+- `npx supabase db lint --local --schema public --level error` — pass.
+- `npm test`, `npm run lint` and `npx tsc --noEmit` — pass.
+- `npm run build` — blocked by Turbopack's CSS worker failing to bind a local
+  port (`Operation not permitted`), including outside the sandbox.
