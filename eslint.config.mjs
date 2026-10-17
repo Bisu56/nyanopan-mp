@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The supplied Stitch design reference is a separate Vite app with its own
+    // package.json and lint script; it is never bundled into this site.
+    "designs/**",
   ]),
 ]);
 

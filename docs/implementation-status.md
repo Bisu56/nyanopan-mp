@@ -1,0 +1,106 @@
+# Implementation Status
+
+Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (Milestone 2 complete)**.
+
+## Milestones
+
+| # | Milestone | Status |
+| --- | --- | --- |
+| 1 | Foundation: repo hygiene, design tokens, UI kit, site shell | ✅ Complete |
+| 2 | Local Supabase CLI, schema migrations + RLS, placeholder seed data | ✅ Complete |
+| 3 | Product browsing: home catalog, filters, product detail | ⬜ Not started |
+| 4 | Cart: client cart store, cart page, quantity controls | ⬜ Not started |
+| 5 | Auth: Supabase signup/login/logout, session DAL, admin role | ⬜ Not started |
+| 6 | Checkout & orders (guest allowed), COD, atomic stock decrement | ⬜ Not started |
+| 7 | Admin interface: product CRUD, Storage uploads, order management | ⬜ Not started |
+| 8 | Polish: order lookup, SEO, accessibility, tests, docs | ⬜ Not started |
+| 9 | eSewa readiness: payment abstraction + docs (no live setup) | ⬜ Not started |
+
+## Milestone 1 — complete (2026-10-17)
+
+### Delivered
+
+- **Repo hygiene:** `.gitignore` fixed so `.env.example` can be committed while real
+  `.env*` files stay ignored; `.env.example` created with local Supabase CLI
+  placeholders; this status file and a Nyanopan-specific `README.md`.
+- **Design system:** Stitch token palette (`designs/src/index.css`) ported 1:1 into
+  `app/globals.css` as Tailwind v4 `@theme` tokens (warm ivory surfaces, terracotta
+  primary `#96432b`, sage secondary `#4f6352`, brown text, Material-3 naming).
+  Playfair Display (serif headings) and Plus Jakarta Sans (body) are self-hosted via
+  `next/font` — no runtime request to Google Fonts.
+- **UI kit:** `components/ui/` — `Container`, `Button` (primary/secondary/ghost
+  variants with a `buttonClassName` helper so `<Link>` can reuse the styling),
+  `Badge`, `EmptyState`.
+- **Site shell:** `SiteHeader` (announcement bar, serif wordmark, desktop nav,
+  accessible mobile drawer with correct `aria-expanded`, skip-to-content link) and
+  `SiteFooter`, both matching the Stitch header/footer designs.
+- **Routes:** `/` (hero + trust strip + collections grid per design), plus honest
+  placeholder pages `/products`, `/story`, `/cart` with empty states, and
+  `loading.tsx` / `error.tsx` / `not-found.tsx` state conventions.
+
+### Decisions taken this milestone (owner review welcome)
+
+1. **No hotlinked demo images.** The Stitch mockups reference Google-hosted demo
+   photos. Those are not Nyanopan's assets and can break without warning, so the
+   site uses branded placeholder panels until real product photography is added to
+   `public/images/products/`.
+2. **Fabricated design content excluded.** The Stitch project contains invented
+   testimonials and demo products. None were shipped (engineering rule #8).
+3. **NPR only, COD only.** The design's NPR/USD currency toggle and the eSewa /
+   Khalti / Fonepay badges are deferred — release 1 charges NPR and accepts COD.
+   The footer advertises only what is actually true today.
+4. **Icons:** `lucide-react` SVG icons replace the Material Symbols web font
+   (smaller, offline-safe). Added as a project dependency, as in the design repo.
+5. **Announcement bar and hero metrics** ("Free delivery inside Ring Road above
+   NPR 2,500", "84+ Women Artisans") are carried over from the supplied design and
+   **need your confirmation** before launch.
+
+### Verification
+
+- `npm run lint` — pass (0 errors)
+- `npx tsc --noEmit` — pass
+- `npm run build` — pass
+
+## Milestone 2 — complete (2026-10-17)
+
+### Delivered
+
+- **Local Supabase CLI:** `supabase/config.toml` configures the local PostgreSQL,
+  Auth, Storage and Studio services. The project is not linked to a hosted project.
+- **Schema and access control:** the initial migration creates profiles, product
+  catalog, variants, image metadata, orders, order items and order status history.
+  RLS is enabled on every public table; public catalog reads are policy-controlled,
+  customer order reads are limited to their own orders, and admin writes use the
+  `is_admin()` helper.
+- **Seed data:** local seed rows are explicitly labelled placeholders, not real
+  Nyanopan products or prices.
+- **Type and framework alignment:** database relationship metadata was added to
+  the Supabase TypeScript types, and the request hook uses the Next.js 16 `proxy.ts`
+  convention instead of deprecated `middleware.ts`.
+
+### Verification
+
+- `npx supabase status` — local stack available; no hosted project linked.
+- `npx supabase migration list --local` — initial migration applied.
+- `npx supabase db lint --local --schema public --level error` — pass, no schema
+  errors.
+- Read-only database queries — 4 placeholder categories and 4 placeholder
+  products present; all 8 public tables have RLS enabled and at least one policy.
+- `npm run lint` and `npx tsc --noEmit` — pass.
+- `npm run build` — attempted, but Turbopack could not bind a local port in this
+  environment. The Webpack fallback also could not parse TypeScript's
+  `--showConfig` output, so a production build remains unverified here.
+
+### Decisions and remaining inputs
+
+- Local Supabase is the development target; no hosted project credentials or live
+  services were configured.
+- Replace placeholder catalog rows with owner-verified product details before
+  presenting them as real products. Product photography is still pending.
+
+## Known gaps / pending inputs from the owner
+
+- Real product catalog data (names, prices, sizes, stock) — needed before real products can be shown in Milestone 3.
+- Product photography — drop into `public/images/products/`.
+- Confirmation of the announcement-bar delivery policy and artisan-count claims.
+- Supabase: local CLI setup is verified; hosted project later — only `.env` values change.

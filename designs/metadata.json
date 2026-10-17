@@ -1,0 +1,6 @@
+{
+  "name": "Nyanopan — Handcrafted Wool Feltcraft & Footwear",
+  "description": "Ethically handmade wool felt slippers, boots, and mindful living goods shaped with pure New Zealand wool and Kathmandu heritage craft.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
