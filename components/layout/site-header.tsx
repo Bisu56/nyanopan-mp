@@ -7,6 +7,7 @@ import { Menu, ShoppingBag, X } from "lucide-react";
 
 import { Container } from "@/components/ui/container";
 import { mainNavLinks, siteConfig } from "@/lib/site";
+import { useCart } from "@/components/cart/cart-provider";
 
 function isActivePath(pathname: string, href: string): boolean {
   const [path] = href.split("?");
@@ -19,13 +20,14 @@ function isActivePath(pathname: string, href: string): boolean {
  *
  * Porting decisions:
  * - `sticky` instead of `fixed`, so page content needs no magic top padding.
- * - Cart is a plain link (cart logic arrives in Milestone 4); search and account
- *   icons are omitted until Milestones 3 and 5 rather than shipping dead buttons.
+ * - The shopping bag is a link with the live item count; search and account
+ *   icons remain omitted until their interactions are implemented.
  * - Category links point at `/products?category=...`; the catalog consumes that
  *   query parameter in Milestone 3.
  */
 export function SiteHeader() {
   const pathname = usePathname();
+  const { itemCount, ready } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -84,14 +86,22 @@ export function SiteHeader() {
         <div className="flex items-center gap-2 md:gap-3">
           <Link
             href="/cart"
-            aria-label="Shopping bag"
-            className={`rounded-full p-2 transition-colors ${
+            aria-label={ready && itemCount > 0 ? `Shopping bag, ${itemCount} ${itemCount === 1 ? "item" : "items"}` : "Shopping bag"}
+            className={`relative rounded-full p-2 transition-colors ${
               isActivePath(pathname, "/cart")
                 ? "bg-primary text-white"
                 : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
             }`}
           >
             <ShoppingBag aria-hidden className="h-[22px] w-[22px]" />
+            {ready && itemCount > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1 text-[10px] font-bold leading-none text-white"
+              >
+                {itemCount > 99 ? "99+" : itemCount}
+              </span>
+            )}
           </Link>
 
           <button

@@ -60,6 +60,13 @@ Only users with an admin profile can read or modify bucket objects. Public produ
 image delivery must use short-lived signed URLs created server-side after checking
 the product's active and published state; never make this bucket public.
 
+The shopping bag is saved in versioned browser storage with product IDs, optional
+variant IDs and quantities only. Product names, prices and stock are fetched from
+the server. `/api/cart/validate` recalculates the current subtotal and checks
+product/variant availability whenever the bag is viewed; checkout must call the
+same server validation again. This endpoint only quotes and validates the bag and
+does not create an order.
+
 The app uses `NEXT_PUBLIC_SUPABASE_URL` and
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. The publishable key is intended for
 browser use and does not replace RLS. Server-side admin code should call
@@ -74,6 +81,7 @@ put a service-role key or other secret in a `NEXT_PUBLIC_` variable.
 | `npm run dev` | Development server |
 | `npm run build` | Production build (fails on type errors) |
 | `npm run lint` | ESLint (Next.js core-web-vitals + TypeScript rules) |
+| `npm test` | Cart model unit tests (Node test runner) |
 | `npx tsc --noEmit` | Standalone type-check |
 
 ## Project structure

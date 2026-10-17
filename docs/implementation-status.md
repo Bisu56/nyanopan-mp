@@ -1,6 +1,6 @@
 # Implementation Status
 
-Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (Supabase catalog integration slice complete)**.
+Living checklist maintained at the end of every milestone. Last updated: **2026-10-17 (cart and checkout validation slice complete)**.
 
 ## Milestones
 
@@ -9,7 +9,7 @@ Living checklist maintained at the end of every milestone. Last updated: **2026-
 | 1 | Foundation: repo hygiene, design tokens, UI kit, site shell | ✅ Complete |
 | 2 | Local Supabase CLI, schema migrations + RLS, placeholder seed data | ✅ Complete |
 | 3 | Product browsing: home catalog, filters, product detail | ✅ Complete |
-| 4 | Cart: client cart store, cart page, quantity controls; Supabase catalog integration requested for this milestone | 🟡 Partial |
+| 4 | Cart: client cart store, cart page, quantity controls, server price/stock validation | ✅ Complete |
 | 5 | Auth: Supabase signup/login/logout, session DAL, admin role | ⬜ Not started |
 | 6 | Checkout & orders (guest allowed), COD, atomic stock decrement | ⬜ Not started |
 | 7 | Admin interface: product CRUD, Storage uploads, order management | ⬜ Not started |
@@ -43,7 +43,36 @@ Living checklist maintained at the end of every milestone. Last updated: **2026-
 - `npm run build` — blocked in both sandboxed and elevated attempts because
   Turbopack cannot bind a local port in this environment.
 
-The cart work listed in the original milestone plan remains unimplemented.
+The original roadmap labels this cart scope as Milestone 4 and labels authentication
+as Milestone 5. The owner's latest request called the cart scope Milestone 5; the
+authentication feature set remains unimplemented.
+
+## Owner-requested cart and checkout-validation scope (2026-10-17)
+
+### Delivered
+
+- Added a versioned browser-persisted cart containing only product IDs, optional
+  variant IDs and quantities. Catalog names, prices and stock are fetched from the
+  server and are never trusted from browser storage.
+- Added add-to-bag controls to simple product cards and selectable variant controls
+  on product details. Cart lines are keyed by both product and variant, so different
+  sizes remain separate while duplicate selections combine quantities.
+- Added responsive cart controls, subtotal, empty state, mobile summary bar and
+  accessible add/remove notifications.
+- Added a server cart validation endpoint and reusable checkout-boundary DAL helper
+  that re-read active published products, current prices, variants and stock. This
+  only validates/quotes the bag; it does not create orders.
+- Added Node unit tests for quantity limits, duplicate merging, variants, persisted
+  state sanitization and empty carts.
+
+### Verification
+
+- `npm test` — pass.
+- `npm run lint` — pass.
+- `npx tsc --noEmit` — pass.
+- `npm run build` — blocked in sandboxed and elevated runs because Turbopack
+  cannot bind a local port in this environment. The `--webpack` fallback also
+  failed because Next could not parse TypeScript's `--showConfig` output.
 
 ## Milestone 1 — complete (2026-10-17)
 

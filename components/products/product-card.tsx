@@ -4,9 +4,14 @@ import { ImageOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatNpr } from "@/lib/format";
 import type { ProductWithRelations } from "@/lib/dal/products";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { buttonClassName } from "@/components/ui/button";
 
 export function ProductCard({ product }: { product: ProductWithRelations }) {
-  const inStock = product.stock_quantity > 0;
+  const hasVariants = product.variants.length > 0;
+  const inStock = hasVariants
+    ? product.variants.some((variant) => variant.is_active && variant.stock_quantity > 0)
+    : product.stock_quantity > 0;
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-surface-container-highest bg-white shadow-xs transition-shadow hover:shadow-md">
@@ -37,6 +42,15 @@ export function ProductCard({ product }: { product: ProductWithRelations }) {
           <p className="pt-1 text-sm font-bold text-on-surface">{formatNpr(product.price_paisa)}</p>
         </div>
       </Link>
+      <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+        {hasVariants ? (
+          <Link href={`/products/${product.slug}`} className={buttonClassName({ variant: "primary", size: "md", className: "w-full" })}>
+            Choose options
+          </Link>
+        ) : (
+          <AddToCartButton productId={product.id} name={product.name} disabled={!inStock} />
+        )}
+      </div>
     </article>
   );
 }

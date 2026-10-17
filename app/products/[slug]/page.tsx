@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/container";
 import { buttonClassName } from "@/components/ui/button";
 import { getProductBySlug } from "@/lib/dal/products";
 import { formatNpr } from "@/lib/format";
+import { ProductPurchaseOptions } from "@/components/products/product-purchase-options";
 
 type ProductPageProps = { params: Promise<{ slug: string }> };
 
@@ -45,7 +46,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   if (!result.data) notFound();
   const product = result.data;
   const availableVariants = product.variants.filter((variant) => variant.is_active);
-  const inStock = availableVariants.length
+  const hasVariants = product.variants.length > 0;
+  const inStock = hasVariants
     ? availableVariants.some((variant) => variant.stock_quantity > 0)
     : product.stock_quantity > 0;
 
@@ -89,17 +91,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </Badge>
           </div>
 
-          {availableVariants.length > 0 && (
+          {hasVariants && (
             <section className="mt-7 w-full" aria-labelledby="available-sizes">
               <h2 id="available-sizes" className="text-sm font-bold text-on-surface">
                 Available variants
               </h2>
               <ul className="mt-3 flex flex-wrap gap-2">
-                {availableVariants.map((variant) => (
+                {product.variants.map((variant) => (
                   <li key={variant.id}>
-                    <span className="inline-flex min-h-10 items-center rounded-lg border border-outline-variant bg-white px-3 text-sm text-on-surface">
+                    <span className={`inline-flex min-h-10 items-center rounded-lg border border-outline-variant bg-white px-3 text-sm ${variant.is_active ? "text-on-surface" : "text-on-surface-variant line-through"}`}>
                       {variant.size_label}
-                      {variant.stock_quantity < 1 ? " · Out of stock" : ""}
+                      {!variant.is_active || variant.stock_quantity < 1 ? " · Out of stock" : ""}
                     </span>
                   </li>
                 ))}
@@ -107,9 +109,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </section>
           )}
 
+          <ProductPurchaseOptions
+            productId={product.id}
+            productName={product.name}
+            stockQuantity={product.stock_quantity}
+            variants={product.variants}
+            hasVariants={hasVariants}
+          />
+
           <p className="mt-7 border-t border-surface-container-highest pt-5 text-xs leading-relaxed text-on-surface-variant">
-            Product information and availability are read from the Nyanopan catalog. Ordering will
-            be available in a later milestone.
+            Product information and availability are read from the Nyanopan catalog. Current price
+            and stock are checked again by the server before checkout.
           </p>
           <Link href="/products" className={`${buttonClassName({ variant: "secondary" })} mt-6`}>
             <ArrowLeft aria-hidden className="h-4 w-4" /> Continue browsing

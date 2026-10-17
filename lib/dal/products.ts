@@ -25,6 +25,7 @@ import type {
   ProductRow,
   ProductVariantRow,
 } from "@/lib/supabase/types";
+import type { CartLine } from "@/lib/cart/model.mjs";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -40,6 +41,38 @@ export interface ProductWithRelations extends ProductRow {
   category: Pick<CategoryRow, "id" | "slug" | "name"> | null;
   variants: ProductVariantRow[];
   images: ProductImageRow[];
+}
+
+export interface CartQuoteItem {
+  productId: string;
+  variantId: string | null;
+  slug: string;
+  name: string;
+  variantLabel: string | null;
+  quantity: number;
+  pricePaisa: number;
+  stockQuantity: number;
+  lineSubtotalPaisa: number;
+}
+
+export interface CartValidationIssue {
+  productId: string;
+  variantId: string | null;
+  code:
+    | "duplicate_line"
+    | "invalid_quantity"
+    | "product_unavailable"
+    | "variant_required"
+    | "variant_unavailable"
+    | "insufficient_stock";
+  message: string;
+}
+
+export interface CartValidationResult {
+  valid: boolean;
+  items: CartQuoteItem[];
+  issues: CartValidationIssue[];
+  subtotalPaisa: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -258,4 +291,158 @@ export async function getProductsByIds(
   }
 
   return { data: data ?? [], error: null };
+}
+
+/**
+ * Re-reads current product/variant prices and stock for the checkout boundary.
+ * The cart payload contains identifiers and quantities only; it never supplies
+ * trusted prices or customer information. This function does not create orders.
+ */
+export async function validateCartForCheckout(
+  lines: CartLine[],
+): Promise<DalResult<CartValidationResult>> {
+  if (lines.length > 50) {
+    return {
+      data: null,
+      error: "A bag may contain up to 50 different product options.",
+    };
+  }
+
+  const issues: CartValidationIssue[] = [];
+  const seen = new Set<string>();
+  for (const line of lines) {
+    const key = `${line.productId}:${line.variantId ?? ""}`;
+    if (seen.has(key)) {
+      issues.push({
+        productId: line.productId,
+        variantId: line.variantId,
+        code: "duplicate_line",
+        message: "This product option appears more than once. Remove a duplicate to continue.",
+      });
+    }
+    seen.add(key);
+    if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 99) {
+      issues.push({
+        productId: line.productId,
+        variantId: line.variantId,
+        code: "invalid_quantity",
+        message: "Choose a quantity between 1 and 99.",
+      });
+    }
+  }
+
+  const ids = [...new Set(lines.map((line) => line.productId))];
+  if (ids.length === 0) {
+    return {
+      data: { valid: issues.length === 0, items: [], issues, subtotalPaisa: 0 },
+      error: null,
+    };
+  }
+
+  const supabase = await createServerClient();
+  const { data: products, error } = await supabase
+    .from("products")
+    .select(
+      "id, slug, name, price_paisa, stock_quantity, product_variants ( id, size_label, stock_quantity, is_active )",
+    )
+    .in("id", ids)
+    .eq("is_active", true)
+    .eq("is_published", true);
+
+  if (error) {
+    console.error("[DAL] validateCartForCheckout error:", error.message);
+    return { data: null, error: "We could not check current prices and stock." };
+  }
+
+  const productById = new Map((products ?? []).map((product) => [product.id, product]));
+  const items: CartQuoteItem[] = [];
+  let subtotalPaisa = 0;
+
+  for (const line of lines) {
+    const product = productById.get(line.productId);
+    if (!product) {
+      issues.push({
+        productId: line.productId,
+        variantId: line.variantId,
+        code: "product_unavailable",
+        message: "This product is no longer available. Remove it from your bag.",
+      });
+      continue;
+    }
+
+    const variants = product.product_variants ?? [];
+    let variantLabel: string | null = null;
+    let stockQuantity = product.stock_quantity;
+
+    if (variants.length > 0 && line.variantId === null) {
+      issues.push({
+        productId: line.productId,
+        variantId: null,
+        code: "variant_required",
+        message: "Choose a product size or option before continuing.",
+      });
+      continue;
+    }
+
+    if (line.variantId !== null) {
+      const variant = variants.find((candidate) => candidate.id === line.variantId);
+      if (!variant || !variant.is_active) {
+        issues.push({
+          productId: line.productId,
+          variantId: line.variantId,
+          code: "variant_unavailable",
+          message: "This size or option is no longer available. Choose another option.",
+        });
+        continue;
+      }
+      variantLabel = variant.size_label;
+      stockQuantity = variant.stock_quantity;
+    }
+
+    const lineSubtotalPaisa = product.price_paisa * line.quantity;
+    if (!Number.isSafeInteger(lineSubtotalPaisa)) {
+      issues.push({
+        productId: line.productId,
+        variantId: line.variantId,
+        code: "invalid_quantity",
+        message: "This quantity cannot be priced safely. Adjust the quantity and retry.",
+      });
+      continue;
+    }
+
+    items.push({
+      productId: product.id,
+      variantId: line.variantId,
+      slug: product.slug,
+      name: product.name,
+      variantLabel,
+      quantity: line.quantity,
+      pricePaisa: product.price_paisa,
+      stockQuantity,
+      lineSubtotalPaisa,
+    });
+    subtotalPaisa += lineSubtotalPaisa;
+
+    if (line.quantity > stockQuantity) {
+      issues.push({
+        productId: line.productId,
+        variantId: line.variantId,
+        code: "insufficient_stock",
+        message:
+          stockQuantity > 0
+            ? `Only ${stockQuantity} ${variantLabel ? `in size ${variantLabel}` : ""} available. Reduce the quantity to continue.`
+            : "This option is out of stock. Remove it or choose another option.",
+      });
+    }
+  }
+
+  return {
+    data: {
+      valid: issues.length === 0 && items.length === lines.length,
+      items,
+      issues,
+      subtotalPaisa,
+    },
+    error: null,
+  };
 }
